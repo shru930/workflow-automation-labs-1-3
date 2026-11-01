@@ -1,0 +1,85 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  },
+  "schemaVersion": 16,
+  "id": "order-verification-form",
+  "type": "default",
+  "components": [
+    {
+      "type": "text",
+      "id": "Heading",
+      "text": "# Verify high-value order\n\nThis order is 50000 or more. Check it before payment is taken."
+    },
+    {
+      "type": "textfield",
+      "id": "Field_0",
+      "key": "orderId",
+      "label": "Order ID",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_1",
+      "key": "customerRef",
+      "label": "Customer",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_2",
+      "key": "productId",
+      "label": "Product",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_3",
+      "key": "quantity",
+      "label": "Quantity",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_4",
+      "key": "orderTotal",
+      "label": "Order total",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_5",
+      "key": "deliveryPriority",
+      "label": "Priority",
+      "readonly": true
+    },
+    {
+      "type": "select",
+      "id": "Choice_0",
+      "key": "verificationResult",
+      "label": "Result",
+      "values": [
+        {
+          "value": "VERIFIED",
+          "label": "Verified: take payment"
+        },
+        {
+          "value": "CANCELLED",
+          "label": "Cancel the order"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "Note_1",
+      "key": "verificationComment",
+      "label": "Comment"
+    }
+  ]
+}

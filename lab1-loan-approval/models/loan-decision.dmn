@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_loan-decision" name="Loan decision" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.8.0">
+  <decision id="loan-decision" name="Loan decision">
+    <decisionTable id="Table_loan-decision" hitPolicy="FIRST">
+      <input id="Input_0" label="Credit score">
+        <inputExpression id="InputExpr_0" typeRef="number"><text>creditScore</text></inputExpression>
+      </input>
+      <input id="Input_1" label="Loan / annual income">
+        <inputExpression id="InputExpr_1" typeRef="number"><text>loanToAnnualIncome</text></inputExpression>
+      </input>
+      <output id="Output_0" label="Decision" name="decision" typeRef="string" />
+      <output id="Output_1" label="Reason" name="reason" typeRef="string" />
+      <rule id="Rule_0">
+        <description>Weak credit is rejected.</description>
+        <inputEntry id="In_0_0"><text>&lt; 600</text></inputEntry>
+        <inputEntry id="In_0_1"><text>-</text></inputEntry>
+        <outputEntry id="Out_0_0"><text>"Rejected"</text></outputEntry>
+        <outputEntry id="Out_0_1"><text>"Credit score below 600"</text></outputEntry>
+      </rule>
+      <rule id="Rule_1">
+        <description>Unaffordable loans are rejected.</description>
+        <inputEntry id="In_1_0"><text>-</text></inputEntry>
+        <inputEntry id="In_1_1"><text>&gt; 5</text></inputEntry>
+        <outputEntry id="Out_1_0"><text>"Rejected"</text></outputEntry>
+        <outputEntry id="Out_1_1"><text>"Loan is more than 5 times annual income"</text></outputEntry>
+      </rule>
+      <rule id="Rule_2">
+        <description>Strong, affordable applications are approved.</description>
+        <inputEntry id="In_2_0"><text>&gt;= 720</text></inputEntry>
+        <inputEntry id="In_2_1"><text>&lt;= 3</text></inputEntry>
+        <outputEntry id="Out_2_0"><text>"Approved"</text></outputEntry>
+        <outputEntry id="Out_2_1"><text>"Strong credit and affordable loan"</text></outputEntry>
+      </rule>
+      <rule id="Rule_3">
+        <description>Everything else goes to an officer.</description>
+        <inputEntry id="In_3_0"><text>-</text></inputEntry>
+        <inputEntry id="In_3_1"><text>-</text></inputEntry>
+        <outputEntry id="Out_3_0"><text>"Manual Review"</text></outputEntry>
+        <outputEntry id="Out_3_1"><text>"Borderline application"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="Shape_loan-decision" dmnElementRef="loan-decision">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

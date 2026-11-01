@@ -1,0 +1,192 @@
+{
+  "processId": "loan-approval",
+  "decisionId": "loan-decision",
+  "statusVariable": "finalStatus",
+  "workerUrl": "http://localhost:8101",
+  "resources": [
+    "loan-approval.bpmn",
+    "loan-decision.dmn",
+    "loan-review-form.form"
+  ],
+  "dmnSamples": [
+    {
+      "creditScore": 540,
+      "loanToAnnualIncome": 1.0
+    },
+    {
+      "creditScore": 780,
+      "loanToAnnualIncome": 6.0
+    },
+    {
+      "creditScore": 780,
+      "loanToAnnualIncome": 0.52
+    },
+    {
+      "creditScore": 680,
+      "loanToAnnualIncome": 0.52
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "TC1",
+      "name": "Meets approval criteria",
+      "inputSummary": "APP-GOOD, score 780, ratio 0.52",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-GOOD"
+      },
+      "expectedRoute": "Validate, credit check, DMN Approved",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED"
+    },
+    {
+      "id": "TC2",
+      "name": "Fails eligibility criteria",
+      "inputSummary": "APP-LOW, score 540",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-LOW"
+      },
+      "expectedRoute": "Validate, credit check, DMN Rejected",
+      "expectedEnd": "End_Rejected",
+      "expectedStatus": "REJECTED"
+    },
+    {
+      "id": "TC3",
+      "name": "Manual review, officer approves",
+      "inputSummary": "APP-MID, score 680",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-MID"
+      },
+      "review": {
+        "Task_Review": {
+          "reviewDecision": "APPROVE",
+          "reviewComment": "Income verified"
+        }
+      },
+      "expectedRoute": "DMN Manual Review, officer approves",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED"
+    },
+    {
+      "id": "TC4",
+      "name": "Manual review, officer rejects",
+      "inputSummary": "APP-MID, score 680",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-MID"
+      },
+      "review": {
+        "Task_Review": {
+          "reviewDecision": "REJECT",
+          "reviewComment": "Insufficient documents"
+        }
+      },
+      "expectedRoute": "DMN Manual Review, officer rejects",
+      "expectedEnd": "End_OfficerRejected",
+      "expectedStatus": "REJECTED_BY_OFFICER"
+    },
+    {
+      "id": "TC5",
+      "name": "Invalid application",
+      "inputSummary": "age 16",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 16,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-GOOD"
+      },
+      "expectedRoute": "Validation fails",
+      "expectedEnd": "End_Invalid",
+      "expectedStatus": "REJECTED_INVALID"
+    },
+    {
+      "id": "TC6",
+      "name": "Credit API error",
+      "inputSummary": "APP-503, API returns 503",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-503"
+      },
+      "review": {
+        "Task_Review": {
+          "reviewDecision": "APPROVE",
+          "reviewComment": "Income verified"
+        }
+      },
+      "expectedRoute": "Error boundary event, officer review",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED"
+    },
+    {
+      "id": "TC7",
+      "name": "Credit API timeout",
+      "inputSummary": "APP-SLOW, API slower than 3 s timeout",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-SLOW"
+      },
+      "review": {
+        "Task_Review": {
+          "reviewDecision": "REJECT",
+          "reviewComment": "Insufficient documents"
+        }
+      },
+      "expectedRoute": "Error boundary event, officer review",
+      "expectedEnd": "End_OfficerRejected",
+      "expectedStatus": "REJECTED_BY_OFFICER"
+    },
+    {
+      "id": "TC8",
+      "name": "Worker failure and recovery",
+      "inputSummary": "validator outage switched on",
+      "variables": {
+        "fullName": "Test Applicant",
+        "age": 30,
+        "monthlyIncome": 80000,
+        "loanAmount": 500000,
+        "loanPurpose": "Home renovation",
+        "employmentStatus": "SALARIED",
+        "applicantId": "APP-RECOVER"
+      },
+      "fault": "validator",
+      "expectedRoute": "Incident, outage fixed, job retried, DMN Approved",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED"
+    }
+  ]
+}

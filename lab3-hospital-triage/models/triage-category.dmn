@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_triage-category" name="Triage category" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.8.0">
+  <decision id="triage-category" name="Triage category">
+    <decisionTable id="Table_triage-category" hitPolicy="FIRST">
+      <input id="Input_0" label="Red-flag symptom">
+        <inputExpression id="InputExpr_0" typeRef="boolean"><text>redFlagSymptom</text></inputExpression>
+      </input>
+      <input id="Input_1" label="Pain level (0-10)">
+        <inputExpression id="InputExpr_1" typeRef="number"><text>painLevel</text></inputExpression>
+      </input>
+      <input id="Input_2" label="Symptom days">
+        <inputExpression id="InputExpr_2" typeRef="number"><text>symptomDays</text></inputExpression>
+      </input>
+      <output id="Output_0" label="Category" name="category" typeRef="string" />
+      <output id="Output_1" label="Reason" name="reason" typeRef="string" />
+      <rule id="Rule_0">
+        <description>A red-flag indicator always goes to a person first.</description>
+        <inputEntry id="In_0_0"><text>true</text></inputEntry>
+        <inputEntry id="In_0_1"><text>-</text></inputEntry>
+        <inputEntry id="In_0_2"><text>-</text></inputEntry>
+        <outputEntry id="Out_0_0"><text>"Urgent Assessment"</text></outputEntry>
+        <outputEntry id="Out_0_1"><text>"Red-flag symptom reported"</text></outputEntry>
+      </rule>
+      <rule id="Rule_1">
+        <description>Severe pain goes to a person first.</description>
+        <inputEntry id="In_1_0"><text>-</text></inputEntry>
+        <inputEntry id="In_1_1"><text>&gt;= 8</text></inputEntry>
+        <inputEntry id="In_1_2"><text>-</text></inputEntry>
+        <outputEntry id="Out_1_0"><text>"Urgent Assessment"</text></outputEntry>
+        <outputEntry id="Out_1_1"><text>"Severe pain reported"</text></outputEntry>
+      </rule>
+      <rule id="Rule_2">
+        <description>Moderate pain gets a staff review.</description>
+        <inputEntry id="In_2_0"><text>-</text></inputEntry>
+        <inputEntry id="In_2_1"><text>[5..7]</text></inputEntry>
+        <inputEntry id="In_2_2"><text>-</text></inputEntry>
+        <outputEntry id="Out_2_0"><text>"Priority Review"</text></outputEntry>
+        <outputEntry id="Out_2_1"><text>"Moderate pain reported"</text></outputEntry>
+      </rule>
+      <rule id="Rule_3">
+        <description>Long-lasting symptoms get a staff review.</description>
+        <inputEntry id="In_3_0"><text>-</text></inputEntry>
+        <inputEntry id="In_3_1"><text>-</text></inputEntry>
+        <inputEntry id="In_3_2"><text>&gt; 14</text></inputEntry>
+        <outputEntry id="Out_3_0"><text>"Priority Review"</text></outputEntry>
+        <outputEntry id="Out_3_1"><text>"Symptoms lasting over 14 days"</text></outputEntry>
+      </rule>
+      <rule id="Rule_4">
+        <description>Everything else is routine.</description>
+        <inputEntry id="In_4_0"><text>-</text></inputEntry>
+        <inputEntry id="In_4_1"><text>-</text></inputEntry>
+        <inputEntry id="In_4_2"><text>-</text></inputEntry>
+        <outputEntry id="Out_4_0"><text>"Routine"</text></outputEntry>
+        <outputEntry id="Out_4_1"><text>"No urgency indicators"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="Shape_triage-category" dmnElementRef="triage-category">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

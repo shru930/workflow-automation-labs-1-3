@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_order-processing" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.8.0">
+  <bpmn:collaboration id="Collaboration_order-processing">
+    <bpmn:participant id="Participant_Main" name="Online Store" processRef="order-processing" />
+  </bpmn:collaboration>
+  <bpmn:process id="order-processing" name="Order Processing and Fulfilment" isExecutable="true">
+    <bpmn:documentation>Lab 2: validates an order, checks stock, calculates the total, sets priority with DMN, takes a mock payment and routes to fulfilment or review.</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_System" name="Order System">
+        <bpmn:flowNodeRef>Start_Order</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Validate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_Valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MarkInvalid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Invalid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Stock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_Stock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MarkNoStock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_NoStock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Total</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Priority</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_HighValue</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_PayMerge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Payment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_Paid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MarkDeclined</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Declined</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Fulfil</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Fulfilled</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Staff" name="Order Verification Staff">
+        <bpmn:flowNodeRef>Task_Verify</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_Verified</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MarkCancelled</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Cancelled</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Order" name="Order&#10;received ​">
+      <bpmn:documentation>Started with the order details as process variables.</bpmn:documentation>
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Task_Validate" name="Validate order">
+      <bpmn:documentation>Spring Boot job worker: checks the order fields.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="lab2.validate-order" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gw_Valid" name="Order&#10;valid? ​" default="Flow_ValidNo">
+      <bpmn:documentation>Exclusive: valid, or not (default).</bpmn:documentation>
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_ValidYes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ValidNo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:scriptTask id="Task_MarkInvalid" name="Mark invalid">
+      <bpmn:documentation>Records the final status.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:script expression='="REJECTED_INVALID"' resultVariable="orderStatus" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ValidNo</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="End_Invalid" name="Order&#10;rejected ​">
+      <bpmn:documentation>End: failed validation.</bpmn:documentation>
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_Stock" name="Check inventory">
+      <bpmn:documentation>Spring Boot job worker: looks up simulated stock.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="lab2.check-inventory" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ValidYes</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gw_Stock" name="In&#10;stock? ​" default="Flow_StockNo">
+      <bpmn:documentation>Exclusive: in stock, or not (default).</bpmn:documentation>
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_StockYes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_StockNo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:scriptTask id="Task_MarkNoStock" name="Mark out of stock">
+      <bpmn:documentation>Records the final status.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:script expression='="OUT_OF_STOCK"' resultVariable="orderStatus" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_StockNo</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="End_NoStock" name="Out of&#10;stock  ​">
+      <bpmn:documentation>End: cannot go to fulfilment.</bpmn:documentation>
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_Total" name="Calculate total">
+      <bpmn:documentation>Spring Boot job worker: unit price x quantity.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="lab2.calculate-total" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_StockYes</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:businessRuleTask id="Task_Priority" name="Set priority">
+      <bpmn:documentation>DMN decision: delivery priority.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="order-priority" resultVariable="priorityResult" />
+        <zeebe:ioMapping>
+          <zeebe:output source="=priorityResult.priority" target="deliveryPriority" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="Gw_HighValue" name="High&#10;value? ​" default="Flow_HighNo">
+      <bpmn:documentation>Orders of 50000 or more are checked by a person.</bpmn:documentation>
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:outgoing>Flow_HighYes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_HighNo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_Verify" name="Verify order">
+      <bpmn:documentation>Tasklist task for high-value orders.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="order-verification-form" />
+        <zeebe:assignmentDefinition assignee="demo" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_HighYes</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gw_Verified" name="Verified? ​" default="Flow_VerifiedNo">
+      <bpmn:documentation>Exclusive: verified, or cancelled (default).</bpmn:documentation>
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+      <bpmn:outgoing>Flow_VerifiedYes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_VerifiedNo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:scriptTask id="Task_MarkCancelled" name="Mark cancelled">
+      <bpmn:documentation>Records the final status.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:script expression='="CANCELLED_BY_STAFF"' resultVariable="orderStatus" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_VerifiedNo</bpmn:incoming>
+      <bpmn:outgoing>Flow_9</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="End_Cancelled" name="Order&#10;cancelled ​">
+      <bpmn:documentation>End: failed verification.</bpmn:documentation>
+      <bpmn:incoming>Flow_9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="Gw_PayMerge">
+      <bpmn:documentation>Merge: normal order or verified high-value order.</bpmn:documentation>
+      <bpmn:incoming>Flow_HighNo</bpmn:incoming>
+      <bpmn:incoming>Flow_VerifiedYes</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Payment" name="Take payment" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="12" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjAzMzUgOC45OTk5N0MxNy4wMzM1IDEzLjQ0NzUgMTMuNDI4MSAxNy4wNTI5IDguOTgwNjUgMTcuMDUyOUM0LjUzMzE2IDE3LjA1MjkgMC45Mjc3NjUgMTMuNDQ3NSAwLjkyNzc2NSA4Ljk5OTk3QzAuOTI3NzY1IDQuNTUyNDggNC41MzMxNiAwLjk0NzA4MyA4Ljk4MDY1IDAuOTQ3MDgzQzEzLjQyODEgMC45NDcwODMgMTcuMDMzNSA0LjU1MjQ4IDE3LjAzMzUgOC45OTk5N1oiIGZpbGw9IiM1MDU1NjIiLz4KPHBhdGggZD0iTTQuOTMxMjYgMTQuMTU3MUw2Ljc4MTA2IDMuNzE0NzFIMTAuMTM3NUMxMS4xOTE3IDMuNzE0NzEgMTEuOTgyNCAzLjk4MzIzIDEyLjUwOTUgNC41MjAyN0MxMy4wNDY1IDUuMDQ3MzYgMTMuMzE1IDUuNzMzNTggMTMuMzE1IDYuNTc4OTJDMTMuMzE1IDcuNDQ0MTQgMTMuMDcxNCA4LjE1NTIyIDEyLjU4NDEgOC43MTIxNUMxMi4xMDY3IDkuMjU5MTMgMTEuNDU1MyA5LjYzNzA1IDEwLjYyOTggOS44NDU5TDEyLjA2MTkgMTQuMTU3MUgxMC4zMzE1TDkuMDMzNjQgMTAuMDI0OUg3LjI0MzUxTDYuNTEyNTQgMTQuMTU3MUg0LjkzMTI2Wk03LjQ5NzExIDguNTkyODFIOS4yNDI0OEM5Ljk5ODMyIDguNTkyODEgMTAuNTkwMSA4LjQyMzc0IDExLjAxNzcgOC4wODU2MUMxMS40NTUzIDcuNzM3NTMgMTEuNjc0MSA3LjI2NTEzIDExLjY3NDEgNi42Njg0MkMxMS42NzQxIDYuMTkxMDYgMTEuNTI0OSA1LjgxODExIDExLjIyNjUgNS41NDk1OUMxMC45MjgyIDUuMjcxMTMgMTAuNDU1OCA1LjEzMTkgOS44MDkzNiA1LjEzMTlIOC4xMDg3NEw3LjQ5NzExIDguNTkyODFaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K">
+      <bpmn:documentation>REST Connector: POST to the mock payment service.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="3" />
+        <zeebe:ioMapping>
+          <zeebe:input source="noAuth" target="authentication.type" />
+          <zeebe:input source="POST" target="method" />
+          <zeebe:input source="http://localhost:8102/api/payments" target="url" />
+          <zeebe:input source='={"Content-Type": "application/json"}' target="headers" />
+          <zeebe:input source="={orderId: orderId, amount: orderTotal, paymentToken: paymentToken}" target="body" />
+          <zeebe:input source="5" target="connectionTimeoutInSeconds" />
+          <zeebe:input source="5" target="readTimeoutInSeconds" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultExpression" value="={paymentStatus: response.body.status, transactionId: response.body.transactionId}" />
+          <zeebe:header key="retryBackoff" value="PT2S" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gw_Paid" name="Payment&#10;outcome? ​" default="Flow_PaidNo">
+      <bpmn:documentation>Exclusive: approved, or declined (default).</bpmn:documentation>
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:outgoing>Flow_PaidYes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PaidNo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:scriptTask id="Task_MarkDeclined" name="Mark declined">
+      <bpmn:documentation>Records the final status.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:script expression='="PAYMENT_DECLINED"' resultVariable="orderStatus" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_PaidNo</bpmn:incoming>
+      <bpmn:outgoing>Flow_12</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="End_Declined" name="Payment&#10;declined ​">
+      <bpmn:documentation>End: the mock service declined the payment.</bpmn:documentation>
+      <bpmn:incoming>Flow_12</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_Fulfil" name="Arrange fulfilment">
+      <bpmn:documentation>Spring Boot job worker: creates a simulated shipment.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="lab2.arrange-fulfilment" retries="3" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_PaidYes</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Fulfilled" name="Order&#10;fulfilled ​">
+      <bpmn:documentation>End: order sent to fulfilment.</bpmn:documentation>
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_Order" targetRef="Task_Validate" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_Validate" targetRef="Gw_Valid" />
+    <bpmn:sequenceFlow id="Flow_ValidYes" name="Yes ​" sourceRef="Gw_Valid" targetRef="Task_Stock">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=orderValid = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_ValidNo" name="No ​" sourceRef="Gw_Valid" targetRef="Task_MarkInvalid" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_MarkInvalid" targetRef="End_Invalid" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_Stock" targetRef="Gw_Stock" />
+    <bpmn:sequenceFlow id="Flow_StockYes" name="Yes ​" sourceRef="Gw_Stock" targetRef="Task_Total">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=stockStatus = "AVAILABLE"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_StockNo" name="No ​" sourceRef="Gw_Stock" targetRef="Task_MarkNoStock" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_MarkNoStock" targetRef="End_NoStock" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_Total" targetRef="Task_Priority" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_Priority" targetRef="Gw_HighValue" />
+    <bpmn:sequenceFlow id="Flow_HighYes" name="Yes ​" sourceRef="Gw_HighValue" targetRef="Task_Verify">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=orderTotal &gt;= 50000</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_HighNo" name="No ​" sourceRef="Gw_HighValue" targetRef="Gw_PayMerge" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="Task_Verify" targetRef="Gw_Verified" />
+    <bpmn:sequenceFlow id="Flow_VerifiedYes" name="Yes ​" sourceRef="Gw_Verified" targetRef="Gw_PayMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=verificationResult = "VERIFIED"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_VerifiedNo" name="No ​" sourceRef="Gw_Verified" targetRef="Task_MarkCancelled" />
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Task_MarkCancelled" targetRef="End_Cancelled" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Gw_PayMerge" targetRef="Task_Payment" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Task_Payment" targetRef="Gw_Paid" />
+    <bpmn:sequenceFlow id="Flow_PaidYes" name="Approved ​" sourceRef="Gw_Paid" targetRef="Task_Fulfil">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=paymentStatus = "APPROVED"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_PaidNo" name="Declined ​" sourceRef="Gw_Paid" targetRef="Task_MarkDeclined" />
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="Task_MarkDeclined" targetRef="End_Declined" />
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="Task_Fulfil" targetRef="End_Fulfilled" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_order-processing">
+      <bpmndi:BPMNShape id="Participant_Main_di" bpmnElement="Participant_Main" isHorizontal="true">
+        <dc:Bounds x="100" y="60" width="2168" height="390" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_System_di" bpmnElement="Lane_System" isHorizontal="true">
+        <dc:Bounds x="130" y="60" width="2138" height="260" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Staff_di" bpmnElement="Lane_Staff" isHorizontal="true">
+        <dc:Bounds x="130" y="320" width="2138" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Order_di" bpmnElement="Start_Order">
+        <dc:Bounds x="202" y="237" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="140" y="277" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Validate_di" bpmnElement="Task_Validate">
+        <dc:Bounds x="320" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Valid_di" bpmnElement="Gw_Valid" isMarkerVisible="true">
+        <dc:Bounds x="495" y="230" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="440" y="284" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MarkInvalid_di" bpmnElement="Task_MarkInvalid">
+        <dc:Bounds x="620" y="85" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Invalid_di" bpmnElement="End_Invalid">
+        <dc:Bounds x="802" y="107" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="740" y="147" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Stock_di" bpmnElement="Task_Stock">
+        <dc:Bounds x="770" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Stock_di" bpmnElement="Gw_Stock" isMarkerVisible="true">
+        <dc:Bounds x="945" y="230" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="890" y="284" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MarkNoStock_di" bpmnElement="Task_MarkNoStock">
+        <dc:Bounds x="1070" y="85" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_NoStock_di" bpmnElement="End_NoStock">
+        <dc:Bounds x="1252" y="107" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1190" y="147" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Total_di" bpmnElement="Task_Total">
+        <dc:Bounds x="1070" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Priority_di" bpmnElement="Task_Priority">
+        <dc:Bounds x="1220" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_HighValue_di" bpmnElement="Gw_HighValue" isMarkerVisible="true">
+        <dc:Bounds x="1395" y="230" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1340" y="198" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Verify_di" bpmnElement="Task_Verify">
+        <dc:Bounds x="1370" y="345" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Verified_di" bpmnElement="Gw_Verified" isMarkerVisible="true">
+        <dc:Bounds x="1545" y="360" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1490" y="414" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MarkCancelled_di" bpmnElement="Task_MarkCancelled">
+        <dc:Bounds x="1670" y="345" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Cancelled_di" bpmnElement="End_Cancelled">
+        <dc:Bounds x="1852" y="367" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1790" y="407" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_PayMerge_di" bpmnElement="Gw_PayMerge" isMarkerVisible="true">
+        <dc:Bounds x="1545" y="230" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Payment_di" bpmnElement="Task_Payment">
+        <dc:Bounds x="1670" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Paid_di" bpmnElement="Gw_Paid" isMarkerVisible="true">
+        <dc:Bounds x="1845" y="230" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1790" y="284" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MarkDeclined_di" bpmnElement="Task_MarkDeclined">
+        <dc:Bounds x="1970" y="85" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Declined_di" bpmnElement="End_Declined">
+        <dc:Bounds x="2152" y="107" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2090" y="147" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Fulfil_di" bpmnElement="Task_Fulfil">
+        <dc:Bounds x="1970" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Fulfilled_di" bpmnElement="End_Fulfilled">
+        <dc:Bounds x="2152" y="237" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2090" y="277" width="160" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="238" y="255" />
+        <di:waypoint x="320" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="420" y="255" />
+        <di:waypoint x="495" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ValidYes_di" bpmnElement="Flow_ValidYes">
+        <di:waypoint x="545" y="255" />
+        <di:waypoint x="770" y="255" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="486" y="238" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ValidNo_di" bpmnElement="Flow_ValidNo">
+        <di:waypoint x="520" y="230" />
+        <di:waypoint x="520" y="125" />
+        <di:waypoint x="620" y="125" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="456" y="210" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="720" y="125" />
+        <di:waypoint x="802" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="870" y="255" />
+        <di:waypoint x="945" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_StockYes_di" bpmnElement="Flow_StockYes">
+        <di:waypoint x="995" y="255" />
+        <di:waypoint x="1070" y="255" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="936" y="238" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_StockNo_di" bpmnElement="Flow_StockNo">
+        <di:waypoint x="970" y="230" />
+        <di:waypoint x="970" y="125" />
+        <di:waypoint x="1070" y="125" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="906" y="210" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
+        <di:waypoint x="1170" y="125" />
+        <di:waypoint x="1252" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
+        <di:waypoint x="1170" y="255" />
+        <di:waypoint x="1220" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_7_di" bpmnElement="Flow_7">
+        <di:waypoint x="1320" y="255" />
+        <di:waypoint x="1395" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_HighYes_di" bpmnElement="Flow_HighYes">
+        <di:waypoint x="1420" y="280" />
+        <di:waypoint x="1420" y="345" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1359" y="286" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_HighNo_di" bpmnElement="Flow_HighNo">
+        <di:waypoint x="1445" y="255" />
+        <di:waypoint x="1545" y="255" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1383" y="238" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_8_di" bpmnElement="Flow_8">
+        <di:waypoint x="1470" y="385" />
+        <di:waypoint x="1545" y="385" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifiedYes_di" bpmnElement="Flow_VerifiedYes">
+        <di:waypoint x="1570" y="360" />
+        <di:waypoint x="1570" y="280" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1509" y="340" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifiedNo_di" bpmnElement="Flow_VerifiedNo">
+        <di:waypoint x="1595" y="385" />
+        <di:waypoint x="1670" y="385" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1533" y="368" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_9_di" bpmnElement="Flow_9">
+        <di:waypoint x="1770" y="385" />
+        <di:waypoint x="1852" y="385" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="1595" y="255" />
+        <di:waypoint x="1670" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <di:waypoint x="1770" y="255" />
+        <di:waypoint x="1845" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PaidYes_di" bpmnElement="Flow_PaidYes">
+        <di:waypoint x="1895" y="255" />
+        <di:waypoint x="1970" y="255" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1851" y="238" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PaidNo_di" bpmnElement="Flow_PaidNo">
+        <di:waypoint x="1870" y="230" />
+        <di:waypoint x="1870" y="125" />
+        <di:waypoint x="1970" y="125" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1824" y="210" width="160" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12">
+        <di:waypoint x="2070" y="125" />
+        <di:waypoint x="2152" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="2070" y="255" />
+        <di:waypoint x="2152" y="255" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

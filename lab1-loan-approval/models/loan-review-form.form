@@ -1,0 +1,85 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  },
+  "schemaVersion": 16,
+  "id": "loan-review-form",
+  "type": "default",
+  "components": [
+    {
+      "type": "text",
+      "id": "Heading",
+      "text": "# Review loan application\n\nCheck the details below, then approve or reject the application."
+    },
+    {
+      "type": "textfield",
+      "id": "Field_0",
+      "key": "applicantId",
+      "label": "Applicant ID",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_1",
+      "key": "fullName",
+      "label": "Applicant name",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_2",
+      "key": "monthlyIncome",
+      "label": "Monthly income",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_3",
+      "key": "loanAmount",
+      "label": "Loan amount",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_4",
+      "key": "creditScore",
+      "label": "Credit score",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_5",
+      "key": "creditStatus",
+      "label": "Credit check status",
+      "readonly": true
+    },
+    {
+      "type": "select",
+      "id": "Choice_0",
+      "key": "reviewDecision",
+      "label": "Decision",
+      "values": [
+        {
+          "value": "APPROVE",
+          "label": "Approve"
+        },
+        {
+          "value": "REJECT",
+          "label": "Reject"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "Note_1",
+      "key": "reviewComment",
+      "label": "Comment"
+    }
+  ]
+}

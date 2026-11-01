@@ -1,0 +1,190 @@
+{
+  "processId": "order-processing",
+  "decisionId": "order-priority",
+  "statusVariable": "orderStatus",
+  "workerUrl": "http://localhost:8102",
+  "resources": [
+    "order-processing.bpmn",
+    "order-priority.dmn",
+    "order-verification-form.form"
+  ],
+  "dmnSamples": [
+    {
+      "orderTotal": 3000,
+      "customerCategory": "REGULAR",
+      "deliveryPreference": "EXPRESS"
+    },
+    {
+      "orderTotal": 75000,
+      "customerCategory": "REGULAR",
+      "deliveryPreference": "STANDARD"
+    },
+    {
+      "orderTotal": 3000,
+      "customerCategory": "PREMIUM",
+      "deliveryPreference": "STANDARD"
+    },
+    {
+      "orderTotal": 20000,
+      "customerCategory": "REGULAR",
+      "deliveryPreference": "STANDARD"
+    },
+    {
+      "orderTotal": 3000,
+      "customerCategory": "REGULAR",
+      "deliveryPreference": "STANDARD"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "TC1",
+      "name": "Stock available, payment succeeds",
+      "inputSummary": "SKU-1001 x 2, tok_test_ok",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 2,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1001",
+        "productId": "SKU-1001"
+      },
+      "expectedRoute": "Stock OK, payment approved, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED"
+    },
+    {
+      "id": "TC2",
+      "name": "Insufficient stock",
+      "inputSummary": "SKU-3003 x 2, 0 in stock",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 2,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1002",
+        "productId": "SKU-3003"
+      },
+      "expectedRoute": "Stock gateway: not available",
+      "expectedEnd": "End_NoStock",
+      "expectedStatus": "OUT_OF_STOCK"
+    },
+    {
+      "id": "TC3",
+      "name": "Payment declined",
+      "inputSummary": "SKU-1001 x 2, tok_declined",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 2,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_declined",
+        "orderId": "ORD-1003",
+        "productId": "SKU-1001"
+      },
+      "expectedRoute": "Payment gateway: declined",
+      "expectedEnd": "End_Declined",
+      "expectedStatus": "PAYMENT_DECLINED"
+    },
+    {
+      "id": "TC4",
+      "name": "High-value order verified",
+      "inputSummary": "SKU-2002 x 1, total 75000",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 1,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1004",
+        "productId": "SKU-2002"
+      },
+      "review": {
+        "Task_Verify": {
+          "verificationResult": "VERIFIED",
+          "verificationComment": "Customer confirmed"
+        }
+      },
+      "expectedRoute": "Manual verification, payment, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED"
+    },
+    {
+      "id": "TC5",
+      "name": "High-value order cancelled",
+      "inputSummary": "SKU-2002 x 1, total 75000",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 1,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1005",
+        "productId": "SKU-2002"
+      },
+      "review": {
+        "Task_Verify": {
+          "verificationResult": "CANCELLED",
+          "verificationComment": "Customer not reachable"
+        }
+      },
+      "expectedRoute": "Manual verification, cancelled",
+      "expectedEnd": "End_Cancelled",
+      "expectedStatus": "CANCELLED_BY_STAFF"
+    },
+    {
+      "id": "TC6",
+      "name": "Invalid order",
+      "inputSummary": "quantity 0",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 0,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1006",
+        "productId": "SKU-1001"
+      },
+      "expectedRoute": "Validation fails",
+      "expectedEnd": "End_Invalid",
+      "expectedStatus": "REJECTED_INVALID"
+    },
+    {
+      "id": "TC7",
+      "name": "Payment service failure and recovery",
+      "inputSummary": "payment outage switched on",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 2,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1007",
+        "productId": "SKU-1001"
+      },
+      "fault": "payment",
+      "expectedRoute": "Incident, outage fixed, job retried, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED"
+    },
+    {
+      "id": "TC8",
+      "name": "Inventory worker failure and recovery",
+      "inputSummary": "inventory outage switched on",
+      "variables": {
+        "customerRef": "CUST-501",
+        "quantity": 2,
+        "deliveryPreference": "STANDARD",
+        "customerCategory": "REGULAR",
+        "paymentToken": "tok_test_ok",
+        "orderId": "ORD-1008",
+        "productId": "SKU-4004"
+      },
+      "fault": "inventory",
+      "expectedRoute": "Incident, outage fixed, job retried, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED"
+    }
+  ]
+}

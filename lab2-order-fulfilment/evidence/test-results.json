@@ -1,0 +1,237 @@
+{
+  "runAt": "2026-11-01T11:48:30.968Z",
+  "deployment": {
+    "tenantId": "<default>",
+    "deploymentKey": "2251799813785392",
+    "deployments": [
+      {
+        "processDefinition": {
+          "processDefinitionId": "order-processing",
+          "processDefinitionVersion": 2,
+          "resourceName": "order-processing.bpmn",
+          "tenantId": "<default>",
+          "processDefinitionKey": "2251799813785393"
+        }
+      },
+      {
+        "decisionDefinition": {
+          "decisionDefinitionId": "order-priority",
+          "version": 2,
+          "name": "Order priority",
+          "tenantId": "<default>",
+          "decisionRequirementsId": "Definitions_order-priority",
+          "decisionDefinitionKey": "2251799813785395",
+          "decisionRequirementsKey": "2251799813785394"
+        }
+      },
+      {
+        "decisionRequirements": {
+          "decisionRequirementsId": "Definitions_order-priority",
+          "version": 2,
+          "decisionRequirementsName": "Order priority",
+          "tenantId": "<default>",
+          "resourceName": "order-priority.dmn",
+          "decisionRequirementsKey": "2251799813785394"
+        }
+      },
+      {
+        "form": {
+          "formId": "order-verification-form",
+          "version": 2,
+          "resourceName": "order-verification-form.form",
+          "tenantId": "<default>",
+          "formKey": "2251799813785396"
+        }
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "TC1",
+      "name": "Stock available, payment succeeds",
+      "input": "SKU-1001 x 2, tok_test_ok",
+      "expectedRoute": "Stock OK, payment approved, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED",
+      "actualEnd": "End_Fulfilled",
+      "actualStatus": "FULFILLED",
+      "processInstanceKey": "2251799813785419",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 5
+    },
+    {
+      "id": "TC2",
+      "name": "Insufficient stock",
+      "input": "SKU-3003 x 2, 0 in stock",
+      "expectedRoute": "Stock gateway: not available",
+      "expectedEnd": "End_NoStock",
+      "expectedStatus": "OUT_OF_STOCK",
+      "actualEnd": "End_NoStock",
+      "actualStatus": "OUT_OF_STOCK",
+      "processInstanceKey": "2251799813785508",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 5
+    },
+    {
+      "id": "TC3",
+      "name": "Payment declined",
+      "input": "SKU-1001 x 2, tok_declined",
+      "expectedRoute": "Payment gateway: declined",
+      "expectedEnd": "End_Declined",
+      "expectedStatus": "PAYMENT_DECLINED",
+      "actualEnd": "End_Declined",
+      "actualStatus": "PAYMENT_DECLINED",
+      "processInstanceKey": "2251799813785546",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 6
+    },
+    {
+      "id": "TC4",
+      "name": "High-value order verified",
+      "input": "SKU-2002 x 1, total 75000",
+      "expectedRoute": "Manual verification, payment, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED",
+      "actualEnd": "End_Fulfilled",
+      "actualStatus": "FULFILLED",
+      "processInstanceKey": "2251799813785642",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Verify"
+      ],
+      "seconds": 7
+    },
+    {
+      "id": "TC5",
+      "name": "High-value order cancelled",
+      "input": "SKU-2002 x 1, total 75000",
+      "expectedRoute": "Manual verification, cancelled",
+      "expectedEnd": "End_Cancelled",
+      "expectedStatus": "CANCELLED_BY_STAFF",
+      "actualEnd": "End_Cancelled",
+      "actualStatus": "CANCELLED_BY_STAFF",
+      "processInstanceKey": "2251799813785742",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Verify"
+      ],
+      "seconds": 7
+    },
+    {
+      "id": "TC6",
+      "name": "Invalid order",
+      "input": "quantity 0",
+      "expectedRoute": "Validation fails",
+      "expectedEnd": "End_Invalid",
+      "expectedStatus": "REJECTED_INVALID",
+      "actualEnd": "End_Invalid",
+      "actualStatus": "REJECTED_INVALID",
+      "processInstanceKey": "2251799813785814",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 4
+    },
+    {
+      "id": "TC7",
+      "name": "Payment service failure and recovery",
+      "input": "payment outage switched on",
+      "expectedRoute": "Incident, outage fixed, job retried, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED",
+      "actualEnd": "End_Fulfilled",
+      "actualStatus": "FULFILLED",
+      "processInstanceKey": "2251799813785864",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Incident on Task_Payment: | Error variables: {error={variables={response={headers={Transfer-Encoding=chunked, Connection=close, Date=Sun, 01 Nov 2026 11:48:13 GMT, Content-Type=application/json}, body",
+        "Cause fixed, job retried"
+      ],
+      "seconds": 16
+    },
+    {
+      "id": "TC8",
+      "name": "Inventory worker failure and recovery",
+      "input": "inventory outage switched on",
+      "expectedRoute": "Incident, outage fixed, job retried, fulfilment",
+      "expectedEnd": "End_Fulfilled",
+      "expectedStatus": "FULFILLED",
+      "actualEnd": "End_Fulfilled",
+      "actualStatus": "FULFILLED",
+      "processInstanceKey": "2251799813785995",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Incident on Task_Stock: java.lang.IllegalStateException: Inventory service is unavailable (simulated outage)\r\n\tat edu.srmist.workflow.lab2.OrderWorkers.checkInventory(OrderWorkers.java:65)\r\n\tat java.b",
+        "Cause fixed, job retried"
+      ],
+      "seconds": 10
+    }
+  ],
+  "dmn": [
+    {
+      "input": {
+        "orderTotal": 3000,
+        "customerCategory": "REGULAR",
+        "deliveryPreference": "EXPRESS"
+      },
+      "output": {
+        "priority": "Critical",
+        "reason": "Express delivery requested"
+      }
+    },
+    {
+      "input": {
+        "orderTotal": 75000,
+        "customerCategory": "REGULAR",
+        "deliveryPreference": "STANDARD"
+      },
+      "output": {
+        "priority": "High",
+        "reason": "High-value order"
+      }
+    },
+    {
+      "input": {
+        "orderTotal": 3000,
+        "customerCategory": "PREMIUM",
+        "deliveryPreference": "STANDARD"
+      },
+      "output": {
+        "priority": "High",
+        "reason": "Premium customer"
+      }
+    },
+    {
+      "input": {
+        "orderTotal": 20000,
+        "customerCategory": "REGULAR",
+        "deliveryPreference": "STANDARD"
+      },
+      "output": {
+        "priority": "Medium",
+        "reason": "Mid-value order"
+      }
+    },
+    {
+      "input": {
+        "orderTotal": 3000,
+        "customerCategory": "REGULAR",
+        "deliveryPreference": "STANDARD"
+      },
+      "output": {
+        "priority": "Low",
+        "reason": "Standard order"
+      }
+    }
+  ]
+}

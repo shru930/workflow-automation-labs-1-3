@@ -1,0 +1,64 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  },
+  "schemaVersion": 16,
+  "id": "urgent-assessment-form",
+  "type": "default",
+  "components": [
+    {
+      "type": "text",
+      "id": "Heading",
+      "text": "# Immediate assessment (simulated)\n\nEducational scenario with synthetic data. Not clinical guidance."
+    },
+    {
+      "type": "textfield",
+      "id": "Field_0",
+      "key": "patientRef",
+      "label": "Patient reference",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_1",
+      "key": "symptomsSummary",
+      "label": "Symptoms summary",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_2",
+      "key": "painLevel",
+      "label": "Pain level",
+      "readonly": true
+    },
+    {
+      "type": "select",
+      "id": "Choice_0",
+      "key": "assessmentOutcome",
+      "label": "Assessment outcome",
+      "values": [
+        {
+          "value": "SEEN",
+          "label": "Seen by nurse"
+        },
+        {
+          "value": "TRANSFERRED",
+          "label": "Transferred to emergency care"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "Note_1",
+      "key": "assessmentNote",
+      "label": "Note"
+    }
+  ]
+}

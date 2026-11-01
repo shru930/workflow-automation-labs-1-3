@@ -1,0 +1,7 @@
+{
+  "happy": "2251799813785419",
+  "taskInstance": "2251799813789383",
+  "incidentInstance": "2251799813789565",
+  "incidentType": "JOB_NO_RETRIES",
+  "incidentMessage": "| Error variables: {error={variables={response={headers={Transfer-Encoding=chunked, Connection=close, Date=Sun, 01 Nov 2026 12:01:16 GMT, Content-Type=application/json}, body={error=Payment service unavailable}}}, message=, type=io.camunda.connector.api.error.ConnectorException, code=503}}"
+}

@@ -1,0 +1,223 @@
+{
+  "runAt": "2026-11-01T11:47:28.413Z",
+  "deployment": {
+    "tenantId": "<default>",
+    "deploymentKey": "2251799813784779",
+    "deployments": [
+      {
+        "processDefinition": {
+          "processDefinitionId": "loan-approval",
+          "processDefinitionVersion": 2,
+          "resourceName": "loan-approval.bpmn",
+          "tenantId": "<default>",
+          "processDefinitionKey": "2251799813784780"
+        }
+      },
+      {
+        "decisionDefinition": {
+          "decisionDefinitionId": "loan-decision",
+          "version": 2,
+          "name": "Loan decision",
+          "tenantId": "<default>",
+          "decisionRequirementsId": "Definitions_loan-decision",
+          "decisionDefinitionKey": "2251799813784783",
+          "decisionRequirementsKey": "2251799813784782"
+        }
+      },
+      {
+        "decisionRequirements": {
+          "decisionRequirementsId": "Definitions_loan-decision",
+          "version": 2,
+          "decisionRequirementsName": "Loan decision",
+          "tenantId": "<default>",
+          "resourceName": "loan-decision.dmn",
+          "decisionRequirementsKey": "2251799813784782"
+        }
+      },
+      {
+        "form": {
+          "formId": "loan-review-form",
+          "version": 2,
+          "resourceName": "loan-review-form.form",
+          "tenantId": "<default>",
+          "formKey": "2251799813784781"
+        }
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "TC1",
+      "name": "Meets approval criteria",
+      "input": "APP-GOOD, score 780, ratio 0.52",
+      "expectedRoute": "Validate, credit check, DMN Approved",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED",
+      "actualEnd": "End_Approved",
+      "actualStatus": "APPROVED",
+      "processInstanceKey": "2251799813784797",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 5
+    },
+    {
+      "id": "TC2",
+      "name": "Fails eligibility criteria",
+      "input": "APP-LOW, score 540",
+      "expectedRoute": "Validate, credit check, DMN Rejected",
+      "expectedEnd": "End_Rejected",
+      "expectedStatus": "REJECTED",
+      "actualEnd": "End_Rejected",
+      "actualStatus": "REJECTED",
+      "processInstanceKey": "2251799813784874",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 6
+    },
+    {
+      "id": "TC3",
+      "name": "Manual review, officer approves",
+      "input": "APP-MID, score 680",
+      "expectedRoute": "DMN Manual Review, officer approves",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED",
+      "actualEnd": "End_Approved",
+      "actualStatus": "APPROVED",
+      "processInstanceKey": "2251799813784926",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Review"
+      ],
+      "seconds": 7
+    },
+    {
+      "id": "TC4",
+      "name": "Manual review, officer rejects",
+      "input": "APP-MID, score 680",
+      "expectedRoute": "DMN Manual Review, officer rejects",
+      "expectedEnd": "End_OfficerRejected",
+      "expectedStatus": "REJECTED_BY_OFFICER",
+      "actualEnd": "End_OfficerRejected",
+      "actualStatus": "REJECTED_BY_OFFICER",
+      "processInstanceKey": "2251799813785025",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Review"
+      ],
+      "seconds": 8
+    },
+    {
+      "id": "TC5",
+      "name": "Invalid application",
+      "input": "age 16",
+      "expectedRoute": "Validation fails",
+      "expectedEnd": "End_Invalid",
+      "expectedStatus": "REJECTED_INVALID",
+      "actualEnd": "End_Invalid",
+      "actualStatus": "REJECTED_INVALID",
+      "processInstanceKey": "2251799813785097",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 5
+    },
+    {
+      "id": "TC6",
+      "name": "Credit API error",
+      "input": "APP-503, API returns 503",
+      "expectedRoute": "Error boundary event, officer review",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED",
+      "actualEnd": "End_Approved",
+      "actualStatus": "APPROVED",
+      "processInstanceKey": "2251799813785140",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Review"
+      ],
+      "seconds": 9
+    },
+    {
+      "id": "TC7",
+      "name": "Credit API timeout",
+      "input": "APP-SLOW, API slower than 3 s timeout",
+      "expectedRoute": "Error boundary event, officer review",
+      "expectedEnd": "End_OfficerRejected",
+      "expectedStatus": "REJECTED_BY_OFFICER",
+      "actualEnd": "End_OfficerRejected",
+      "actualStatus": "REJECTED_BY_OFFICER",
+      "processInstanceKey": "2251799813785225",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Review"
+      ],
+      "seconds": 9
+    },
+    {
+      "id": "TC8",
+      "name": "Worker failure and recovery",
+      "input": "validator outage switched on",
+      "expectedRoute": "Incident, outage fixed, job retried, DMN Approved",
+      "expectedEnd": "End_Approved",
+      "expectedStatus": "APPROVED",
+      "actualEnd": "End_Approved",
+      "actualStatus": "APPROVED",
+      "processInstanceKey": "2251799813785307",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Incident on Task_Validate: java.lang.IllegalStateException: Applicant validation service is unavailable (simulated outage)\r\n\tat edu.srmist.workflow.lab1.LoanWorkers.validateApplicant(LoanWorkers.java:",
+        "Cause fixed, job retried"
+      ],
+      "seconds": 10
+    }
+  ],
+  "dmn": [
+    {
+      "input": {
+        "creditScore": 540,
+        "loanToAnnualIncome": 1
+      },
+      "output": {
+        "decision": "Rejected",
+        "reason": "Credit score below 600"
+      }
+    },
+    {
+      "input": {
+        "creditScore": 780,
+        "loanToAnnualIncome": 6
+      },
+      "output": {
+        "decision": "Rejected",
+        "reason": "Loan is more than 5 times annual income"
+      }
+    },
+    {
+      "input": {
+        "creditScore": 780,
+        "loanToAnnualIncome": 0.52
+      },
+      "output": {
+        "decision": "Approved",
+        "reason": "Strong credit and affordable loan"
+      }
+    },
+    {
+      "input": {
+        "creditScore": 680,
+        "loanToAnnualIncome": 0.52
+      },
+      "output": {
+        "decision": "Manual Review",
+        "reason": "Borderline application"
+      }
+    }
+  ]
+}

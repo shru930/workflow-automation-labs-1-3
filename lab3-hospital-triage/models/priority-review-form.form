@@ -1,0 +1,64 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  },
+  "schemaVersion": 16,
+  "id": "priority-review-form",
+  "type": "default",
+  "components": [
+    {
+      "type": "text",
+      "id": "Heading",
+      "text": "# Priority staff review\n\nEducational scenario with synthetic data. Decide whether this request can go ahead."
+    },
+    {
+      "type": "textfield",
+      "id": "Field_0",
+      "key": "patientRef",
+      "label": "Patient reference",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_1",
+      "key": "symptomsSummary",
+      "label": "Symptoms summary",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_2",
+      "key": "department",
+      "label": "Department",
+      "readonly": true
+    },
+    {
+      "type": "select",
+      "id": "Choice_0",
+      "key": "reviewOutcome",
+      "label": "Outcome",
+      "values": [
+        {
+          "value": "PROCEED",
+          "label": "Proceed to booking"
+        },
+        {
+          "value": "REFER",
+          "label": "Refer elsewhere"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "Note_1",
+      "key": "reviewNote",
+      "label": "Note"
+    }
+  ]
+}

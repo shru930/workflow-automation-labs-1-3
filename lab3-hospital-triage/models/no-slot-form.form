@@ -1,0 +1,60 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  },
+  "schemaVersion": 16,
+  "id": "no-slot-form",
+  "type": "default",
+  "components": [
+    {
+      "type": "text",
+      "id": "Heading",
+      "text": "# No appointment slot available\n\nThe scheduling API returned no slots. Choose what happens next."
+    },
+    {
+      "type": "textfield",
+      "id": "Field_0",
+      "key": "patientRef",
+      "label": "Patient reference",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_1",
+      "key": "department",
+      "label": "Department",
+      "readonly": true
+    },
+    {
+      "type": "textfield",
+      "id": "Field_2",
+      "key": "requestedDate",
+      "label": "Requested date",
+      "readonly": true
+    },
+    {
+      "type": "select",
+      "id": "Choice_0",
+      "key": "noSlotAction",
+      "label": "Action",
+      "values": [
+        {
+          "value": "WAITLIST",
+          "label": "Add to waiting list"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "Note_1",
+      "key": "staffNote",
+      "label": "Note"
+    }
+  ]
+}

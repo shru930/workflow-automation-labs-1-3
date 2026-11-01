@@ -1,0 +1,241 @@
+{
+  "runAt": "2026-11-01T11:49:28.896Z",
+  "deployment": {
+    "tenantId": "<default>",
+    "deploymentKey": "2251799813786101",
+    "deployments": [
+      {
+        "processDefinition": {
+          "processDefinitionId": "hospital-appointment",
+          "processDefinitionVersion": 2,
+          "resourceName": "hospital-appointment.bpmn",
+          "tenantId": "<default>",
+          "processDefinitionKey": "2251799813786102"
+        }
+      },
+      {
+        "decisionDefinition": {
+          "decisionDefinitionId": "triage-category",
+          "version": 2,
+          "name": "Triage category",
+          "tenantId": "<default>",
+          "decisionRequirementsId": "Definitions_triage-category",
+          "decisionDefinitionKey": "2251799813786106",
+          "decisionRequirementsKey": "2251799813786105"
+        }
+      },
+      {
+        "decisionRequirements": {
+          "decisionRequirementsId": "Definitions_triage-category",
+          "version": 2,
+          "decisionRequirementsName": "Triage category",
+          "tenantId": "<default>",
+          "resourceName": "triage-category.dmn",
+          "decisionRequirementsKey": "2251799813786105"
+        }
+      },
+      {
+        "form": {
+          "formId": "no-slot-form",
+          "version": 2,
+          "resourceName": "no-slot-form.form",
+          "tenantId": "<default>",
+          "formKey": "2251799813786103"
+        }
+      },
+      {
+        "form": {
+          "formId": "priority-review-form",
+          "version": 2,
+          "resourceName": "priority-review-form.form",
+          "tenantId": "<default>",
+          "formKey": "2251799813786104"
+        }
+      },
+      {
+        "form": {
+          "formId": "urgent-assessment-form",
+          "version": 2,
+          "resourceName": "urgent-assessment-form.form",
+          "tenantId": "<default>",
+          "formKey": "2251799813786107"
+        }
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "TC1",
+      "name": "Routine with a slot",
+      "input": "pain 2, cardiology",
+      "expectedRoute": "DMN Routine, slot found, booked",
+      "expectedEnd": "End_Booked",
+      "expectedStatus": "CONFIRMED",
+      "actualEnd": "End_Booked",
+      "actualStatus": "CONFIRMED",
+      "processInstanceKey": "2251799813786124",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 5
+    },
+    {
+      "id": "TC2",
+      "name": "Priority review, staff proceed",
+      "input": "pain 6",
+      "expectedRoute": "DMN Priority Review, staff proceed, booked",
+      "expectedEnd": "End_Booked",
+      "expectedStatus": "CONFIRMED",
+      "actualEnd": "End_Booked",
+      "actualStatus": "CONFIRMED",
+      "processInstanceKey": "2251799813786200",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Priority"
+      ],
+      "seconds": 6
+    },
+    {
+      "id": "TC3",
+      "name": "Priority review, staff refer",
+      "input": "14+ days of symptoms",
+      "expectedRoute": "DMN Priority Review, staff refer",
+      "expectedEnd": "End_Referred",
+      "expectedStatus": "REFERRED_BY_STAFF",
+      "actualEnd": "End_Referred",
+      "actualStatus": "REFERRED_BY_STAFF",
+      "processInstanceKey": "2251799813786279",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Priority"
+      ],
+      "seconds": 7
+    },
+    {
+      "id": "TC4",
+      "name": "Urgent assessment",
+      "input": "red-flag symptom",
+      "expectedRoute": "DMN Urgent Assessment, immediate human task",
+      "expectedEnd": "End_Urgent",
+      "expectedStatus": "URGENT_ASSESSED",
+      "actualEnd": "End_Urgent",
+      "actualStatus": "URGENT_ASSESSED",
+      "processInstanceKey": "2251799813786360",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_Urgent"
+      ],
+      "seconds": 7
+    },
+    {
+      "id": "TC5",
+      "name": "No slots available",
+      "input": "dermatology, no slots",
+      "expectedRoute": "No slot, staff task, waitlisted",
+      "expectedEnd": "End_Waitlisted",
+      "expectedStatus": "WAITLISTED",
+      "actualEnd": "End_Waitlisted",
+      "actualStatus": "WAITLISTED",
+      "processInstanceKey": "2251799813786409",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Completed task Task_NoSlot"
+      ],
+      "seconds": 7
+    },
+    {
+      "id": "TC6",
+      "name": "Invalid registration",
+      "input": "bad patient reference",
+      "expectedRoute": "Validation fails",
+      "expectedEnd": "End_Invalid",
+      "expectedStatus": "INVALID_REGISTRATION",
+      "actualEnd": "End_Invalid",
+      "actualStatus": "INVALID_REGISTRATION",
+      "processInstanceKey": "2251799813786505",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [],
+      "seconds": 6
+    },
+    {
+      "id": "TC7",
+      "name": "Scheduling API failure and recovery",
+      "input": "scheduling outage switched on",
+      "expectedRoute": "Incident, outage fixed, job retried, booked",
+      "expectedEnd": "End_Booked",
+      "expectedStatus": "CONFIRMED",
+      "actualEnd": "End_Booked",
+      "actualStatus": "CONFIRMED",
+      "processInstanceKey": "2251799813786544",
+      "state": "COMPLETED",
+      "result": "PASS",
+      "notes": [
+        "Incident on Task_Slots: | Error variables: {error={variables={response={headers={Transfer-Encoding=chunked, Connection=close, Date=Sun, 01 Nov 2026 11:49:19 GMT, Content-Type=application/json}, body={",
+        "Cause fixed, job retried"
+      ],
+      "seconds": 17
+    }
+  ],
+  "dmn": [
+    {
+      "input": {
+        "redFlagSymptom": true,
+        "painLevel": 2,
+        "symptomDays": 1
+      },
+      "output": {
+        "category": "Urgent Assessment",
+        "reason": "Red-flag symptom reported"
+      }
+    },
+    {
+      "input": {
+        "redFlagSymptom": false,
+        "painLevel": 9,
+        "symptomDays": 1
+      },
+      "output": {
+        "category": "Urgent Assessment",
+        "reason": "Severe pain reported"
+      }
+    },
+    {
+      "input": {
+        "redFlagSymptom": false,
+        "painLevel": 6,
+        "symptomDays": 2
+      },
+      "output": {
+        "category": "Priority Review",
+        "reason": "Moderate pain reported"
+      }
+    },
+    {
+      "input": {
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 20
+      },
+      "output": {
+        "category": "Priority Review",
+        "reason": "Symptoms lasting over 14 days"
+      }
+    },
+    {
+      "input": {
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 3
+      },
+      "output": {
+        "category": "Routine",
+        "reason": "No urgency indicators"
+      }
+    }
+  ]
+}

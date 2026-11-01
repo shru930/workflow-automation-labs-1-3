@@ -1,0 +1,193 @@
+{
+  "processId": "hospital-appointment",
+  "decisionId": "triage-category",
+  "statusVariable": "bookingStatus",
+  "workerUrl": "http://localhost:8103",
+  "resources": [
+    "hospital-appointment.bpmn",
+    "triage-category.dmn",
+    "urgent-assessment-form.form",
+    "priority-review-form.form",
+    "no-slot-form.form"
+  ],
+  "dmnSamples": [
+    {
+      "redFlagSymptom": true,
+      "painLevel": 2,
+      "symptomDays": 1
+    },
+    {
+      "redFlagSymptom": false,
+      "painLevel": 9,
+      "symptomDays": 1
+    },
+    {
+      "redFlagSymptom": false,
+      "painLevel": 6,
+      "symptomDays": 2
+    },
+    {
+      "redFlagSymptom": false,
+      "painLevel": 2,
+      "symptomDays": 20
+    },
+    {
+      "redFlagSymptom": false,
+      "painLevel": 2,
+      "symptomDays": 3
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "TC1",
+      "name": "Routine with a slot",
+      "inputSummary": "pain 2, cardiology",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "cardiology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 3,
+        "patientRef": "PT-1001"
+      },
+      "expectedRoute": "DMN Routine, slot found, booked",
+      "expectedEnd": "End_Booked",
+      "expectedStatus": "CONFIRMED"
+    },
+    {
+      "id": "TC2",
+      "name": "Priority review, staff proceed",
+      "inputSummary": "pain 6",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "cardiology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": false,
+        "painLevel": 6,
+        "symptomDays": 3,
+        "patientRef": "PT-1002"
+      },
+      "review": {
+        "Task_Priority": {
+          "reviewOutcome": "PROCEED",
+          "reviewNote": "Safe to book"
+        }
+      },
+      "expectedRoute": "DMN Priority Review, staff proceed, booked",
+      "expectedEnd": "End_Booked",
+      "expectedStatus": "CONFIRMED"
+    },
+    {
+      "id": "TC3",
+      "name": "Priority review, staff refer",
+      "inputSummary": "14+ days of symptoms",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "cardiology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 20,
+        "patientRef": "PT-1003"
+      },
+      "review": {
+        "Task_Priority": {
+          "reviewOutcome": "REFER",
+          "reviewNote": "Refer to specialist"
+        }
+      },
+      "expectedRoute": "DMN Priority Review, staff refer",
+      "expectedEnd": "End_Referred",
+      "expectedStatus": "REFERRED_BY_STAFF"
+    },
+    {
+      "id": "TC4",
+      "name": "Urgent assessment",
+      "inputSummary": "red-flag symptom",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "cardiology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": true,
+        "painLevel": 2,
+        "symptomDays": 3,
+        "patientRef": "PT-1004"
+      },
+      "review": {
+        "Task_Urgent": {
+          "assessmentOutcome": "SEEN",
+          "assessmentNote": "Seen by nurse"
+        }
+      },
+      "expectedRoute": "DMN Urgent Assessment, immediate human task",
+      "expectedEnd": "End_Urgent",
+      "expectedStatus": "URGENT_ASSESSED"
+    },
+    {
+      "id": "TC5",
+      "name": "No slots available",
+      "inputSummary": "dermatology, no slots",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "dermatology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 3,
+        "patientRef": "PT-1005"
+      },
+      "review": {
+        "Task_NoSlot": {
+          "noSlotAction": "WAITLIST",
+          "staffNote": "Added to waiting list"
+        }
+      },
+      "expectedRoute": "No slot, staff task, waitlisted",
+      "expectedEnd": "End_Waitlisted",
+      "expectedStatus": "WAITLISTED"
+    },
+    {
+      "id": "TC6",
+      "name": "Invalid registration",
+      "inputSummary": "bad patient reference",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "cardiology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 3,
+        "patientRef": "BAD"
+      },
+      "expectedRoute": "Validation fails",
+      "expectedEnd": "End_Invalid",
+      "expectedStatus": "INVALID_REGISTRATION"
+    },
+    {
+      "id": "TC7",
+      "name": "Scheduling API failure and recovery",
+      "inputSummary": "scheduling outage switched on",
+      "variables": {
+        "appointmentPreference": "MORNING",
+        "department": "cardiology",
+        "requestedDate": "2026-11-20",
+        "symptomsSummary": "Synthetic test case",
+        "redFlagSymptom": false,
+        "painLevel": 2,
+        "symptomDays": 3,
+        "patientRef": "PT-1007"
+      },
+      "fault": "scheduling",
+      "expectedRoute": "Incident, outage fixed, job retried, booked",
+      "expectedEnd": "End_Booked",
+      "expectedStatus": "CONFIRMED"
+    }
+  ]
+}
